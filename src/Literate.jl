@@ -225,8 +225,8 @@ function create_configuration(inputfile; user_config, user_kwargs)
         ("```@example $(get(user_config, "name", cfg["name"]))" => "```") : ("```julia" => "```")
     cfg["execute"] = true
     # Guess the package (or repository) root url
-    edit_commit = "master" # TODO: Make this configurable like Documenter?
-    deploy_branch = "gh-pages" # TODO: Make this configurable like Documenter?
+    devbranch = get(user_config, "devbranch", "master")
+    branch = get(user_config, "branch", "gh-pages")
     if haskey(ENV, "HAS_JOSH_K_SEAL_OF_APPROVAL") # Travis CI
         repo_slug = get(ENV, "TRAVIS_REPO_SLUG", "unknown-repository")
         deploy_folder = if get(ENV, "TRAVIS_PULL_REQUEST", nothing) == "false"
@@ -234,9 +234,9 @@ function create_configuration(inputfile; user_config, user_kwargs)
         else
             "previews/PR$(get(ENV, "TRAVIS_PULL_REQUEST", "##"))"
         end
-        cfg["repo_root_url"] = "https://github.com/$(repo_slug)/blob/$(edit_commit)"
-        cfg["nbviewer_root_url"] = "https://nbviewer.jupyter.org/github/$(repo_slug)/blob/$(deploy_branch)/$(deploy_folder)"
-        cfg["binder_root_url"] = "https://mybinder.org/v2/gh/$(repo_slug)/$(deploy_branch)?filepath=$(deploy_folder)"
+        cfg["repo_root_url"] = "https://github.com/$(repo_slug)/blob/$(devbranch)"
+        cfg["nbviewer_root_url"] = "https://nbviewer.jupyter.org/github/$(repo_slug)/blob/$(branch)/$(deploy_folder)"
+        cfg["binder_root_url"] = "https://mybinder.org/v2/gh/$(repo_slug)/$(branch)?filepath=$(deploy_folder)"
         if (dir = get(ENV, "TRAVIS_BUILD_DIR", nothing)) !== nothing
             cfg["repo_root_path"] = dir
         end
@@ -253,15 +253,15 @@ function create_configuration(inputfile; user_config, user_kwargs)
         else
             "dev"
         end
-        cfg["repo_root_url"] = "https://github.com/$(repo_slug)/blob/$(edit_commit)"
-        cfg["nbviewer_root_url"] = "https://nbviewer.jupyter.org/github/$(repo_slug)/blob/$(deploy_branch)/$(deploy_folder)"
-        cfg["binder_root_url"] = "https://mybinder.org/v2/gh/$(repo_slug)/$(deploy_branch)?filepath=$(deploy_folder)"
+        cfg["repo_root_url"] = "https://github.com/$(repo_slug)/blob/$(devbranch)"
+        cfg["nbviewer_root_url"] = "https://nbviewer.jupyter.org/github/$(repo_slug)/blob/$(branch)/$(deploy_folder)"
+        cfg["binder_root_url"] = "https://mybinder.org/v2/gh/$(repo_slug)/$(branch)?filepath=$(deploy_folder)"
         if (dir = get(ENV, "GITHUB_WORKSPACE", nothing)) !== nothing
             cfg["repo_root_path"] = dir
         end
     elseif haskey(ENV, "GITLAB_CI")
         if (url = get(ENV, "CI_PROJECT_URL", nothing)) !== nothing
-            cfg["repo_root_url"] = "$(url)/blob/$(edit_commit)"
+            cfg["repo_root_url"] = "$(url)/blob/$(devbranch)"
         end
         if (url = get(ENV, "CI_PAGES_URL", nothing)) !== nothing &&
            (m = match(r"https://(.+)", url)) !== nothing
@@ -295,6 +295,8 @@ See the manual section about [Configuration](@ref) for more information.
 | `codefence` | Pair containing opening and closing fence for wrapping code blocks. | `````"```julia" => "```"````` | If `documenter` is `true` the default is `````"```@example"=>"```"`````. |
 | `execute` | Whether to execute and capture the output. | `true` | Only applicable for `Literate.notebook`. |
 | `devurl` | URL for "in-development" docs. | `"dev"` | See [Documenter docs](https://juliadocs.github.io/Documenter.jl/). Unused if `repo_root_url`/`nbviewer_root_url`/`binder_root_url` are set. |
+| `branch` | deployment branch of the documentation. | `"gh-pages"` | See [Documenter docs](https://juliadocs.github.io/Documenter.jl/). Unused if `repo_root_url`/`nbviewer_root_url`/`binder_root_url` are set. |
+| `devbranch` | development branch of the documentation. | `"master"` | See [Documenter docs](https://juliadocs.github.io/Documenter.jl/). Unused if `repo_root_url`/`nbviewer_root_url`/`binder_root_url` are set. |
 | `repo_root_url` | URL to the root of the repository. | - | Determined automatically on Travis CI, GitHub Actions and GitLab CI. Used for `@__REPO_ROOT_URL__`. |
 | `nbviewer_root_url` | URL to the root of the repository as seen on nbviewer. | - | Determined automatically on Travis CI, GitHub Actions and GitLab CI. Used for `@__NBVIEWER_ROOT_URL__`. |
 | `binder_root_url` | URL to the root of the repository as seen on mybinder. | - | Determined automatically on Travis CI, GitHub Actions and GitLab CI. Used for `@__BINDER_ROOT_URL__`. |
